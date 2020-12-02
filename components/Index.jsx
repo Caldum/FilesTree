@@ -1,15 +1,87 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, Button } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, TextInput, View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { connect } from 'react-redux';
 import { getData } from '../redux/actions';
+import { ListItem, Icon } from 'react-native-elements';
 
 export function Index ({ getData, data }) {
   const [URL, onChangeURL] = useState('');
+  const [listItemVisibility, setListItemVisibility] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [inputVisibility, setInputVisibility] = useState(true);
+  const [error, setError] = useState(false);
+
+  const validateURL = (url) => {
+    const urlRegEx = /[(http(s)?)://(www.)?a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
+    return urlRegEx.test(url);
+  };
 
   const handleRequest = () => {
-    console.log('holu');
-    getData(URL);
+    if (URL === '') {
+      setError(true);
+    } else {
+      if (validateURL(URL)) {
+        setLoading(true);
+        getData(URL);
+        setError(false);
+      } else {
+        setError(true);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (data.length) {
+      setInputVisibility(false);
+      setLoading(false);
+    }
+  }, [data]);
+
+  const handleVisibility = (item) => {
+    if (!listItemVisibility) {
+      setListItemVisibility({
+        ...listItemVisibility,
+        [item]: 'auto'
+      });
+    } else if (listItemVisibility && !listItemVisibility[item]) {
+      setListItemVisibility({
+        ...listItemVisibility,
+        [item]: 'auto'
+      });
+    } else {
+      setListItemVisibility({
+        ...listItemVisibility,
+        [item]: 0
+      });
+    }
+  };
+
+  const displayData = (data) => {
+    return data.map(element => {
+      if (element.files && element.files.length) {
+        return (
+          <React.Fragment key={'fragment-' + element.name}>
+            <ListItem key={element.name} onPress={() => handleVisibility(element.name)} containerStyle={{ backgroundColor: '#3e6a80' }}>
+              <Icon name="folder" color="#fab469" />
+              <ListItem.Content>
+                <ListItem.Title style={{ color: 'white' }}>{element.name}</ListItem.Title>
+              </ListItem.Content>
+            </ListItem>
+            <View style={{ paddingLeft: 20, height: listItemVisibility[element.name] ? listItemVisibility[element.name] : 0 }}>{displayData(element.files)}</View>
+          </React.Fragment>
+        );
+      } else {
+        return (
+          <ListItem key={element.name} containerStyle={{ backgroundColor: '#3e6a80' }}>
+            <Icon name={element.type === 'directory' ? 'folder' : 'description'} color="#fab469" />
+            <ListItem.Content>
+              <ListItem.Title style={{ color: 'white' }}>{element.name}</ListItem.Title>
+            </ListItem.Content>
+          </ListItem>
+        );
+      }
+    });
   };
 
   return (
@@ -17,12 +89,32 @@ export function Index ({ getData, data }) {
       <StatusBar hidden={true} />
       <View style={{ marginBottom: 30 }}>
         <Text style={styles.title}>FilesTree Visualizer</Text>
+        <Text>{error}</Text>
       </View>
-      <View>
-        <Text style={styles.label}>Data URL:</Text>
-        <TextInput style={styles.input} autoCapitalize="none" value={URL} onChangeText={text => onChangeURL(text)} placeholder="https://ejemplo.com/api" />
-        <Button onPress={() => handleRequest()} title="Realizar consulta" />
-      </View>
+      {inputVisibility
+        ? <View>
+          <Text style={styles.label}>URL datos:</Text>
+          <TextInput style={error ? { ...styles.input, borderWidth: 1, borderColor: 'red' } : styles.input} autoCapitalize="none" value={URL} onChangeText={text => onChangeURL(text)} placeholder="https://ejemplo.com/api" />
+          <TouchableOpacity style={styles.button} onPress={() => handleRequest()}>
+            <Text style={styles.buttonText}>Realizar Consulta</Text>
+          </TouchableOpacity>
+        </View>
+        : <View>
+          <Text style={styles.label}>Mostrando datos de:</Text>
+          <Text style={styles.inputViewer}>{URL}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <TouchableOpacity style={{ ...styles.button, width: '49%' }} onPress={() => setInputVisibility(true)}>
+              <Text style={styles.buttonText}>Cambiar URL</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ ...styles.button, width: '49%' }} onPress={() => handleRequest()}>
+              <Text style={styles.buttonText}>Recargar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>}
+      <ScrollView style={{ marginTop: 10 }}>
+        {loading && <ActivityIndicator style={{ marginTop: 5 }} animating={loading} size="large" color="white" />}
+        {data.length ? displayData(data) : null}
+      </ScrollView>
     </View>
   );
 }
@@ -30,23 +122,44 @@ export function Index ({ getData, data }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    margin: 30,
-    backgroundColor: '#fff'
+    padding: 30,
+    backgroundColor: '#3e6a80'
   },
   title: {
     fontSize: 35,
-    textAlign: 'center'
+    textAlign: 'center',
+    color: 'white'
   },
   label: {
     fontSize: 18,
-    marginBottom: 5
+    marginBottom: 5,
+    color: 'white'
   },
   input: {
     width: '100%',
     fontSize: 18,
     paddingVertical: 10,
     paddingHorizontal: 15,
-    borderWidth: 1
+    backgroundColor: 'white',
+    color: '#3e6a80',
+    marginBottom: 5
+  },
+  inputViewer: {
+    width: '100%',
+    fontSize: 18,
+    padding: 5,
+    backgroundColor: 'white',
+    color: '#3e6a80',
+    marginBottom: 5
+  },
+  button: {
+    alignItems: 'center',
+    backgroundColor: '#fab469',
+    padding: 10
+  },
+  buttonText: {
+    fontSize: 18,
+    color: 'white'
   }
 });
 
