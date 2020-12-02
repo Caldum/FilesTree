@@ -1,7 +1,8 @@
-import { GET_DATA } from '../actions';
+import { GET_DATA, ERROR } from '../actions';
 
 const initialState = {
-  data: []
+  data: [],
+  error: ''
 };
 
 export default (state = initialState, action) => {
@@ -10,6 +11,12 @@ export default (state = initialState, action) => {
       return {
         ...state,
         data: action.payload
+      };
+    case ERROR:
+      return {
+        ...state,
+        data: [],
+        error: 'Error en la carga de datos'
       };
     default: {
       return state;

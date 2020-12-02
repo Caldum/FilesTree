@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { getData } from '../redux/actions';
 import { ListItem, Icon } from 'react-native-elements';
 
-export function Index ({ getData, data }) {
+export function Index({ getData, data, dataError }) {
   const [URL, onChangeURL] = useState('');
   const [listItemVisibility, setListItemVisibility] = useState({});
   const [loading, setLoading] = useState(false);
@@ -34,9 +34,9 @@ export function Index ({ getData, data }) {
   useEffect(() => {
     if (data.length) {
       setInputVisibility(false);
-      setLoading(false);
     }
-  }, [data]);
+    setLoading(false);
+  }, [data, dataError]);
 
   const handleVisibility = (item) => {
     if (!listItemVisibility) {
@@ -89,7 +89,6 @@ export function Index ({ getData, data }) {
       <StatusBar hidden={true} />
       <View style={{ marginBottom: 30 }}>
         <Text style={styles.title}>FilesTree Visualizer</Text>
-        <Text>{error}</Text>
       </View>
       {inputVisibility
         ? <View>
@@ -113,7 +112,7 @@ export function Index ({ getData, data }) {
         </View>}
       <ScrollView style={{ marginTop: 10 }}>
         {loading && <ActivityIndicator style={{ marginTop: 5 }} animating={loading} size="large" color="white" />}
-        {data.length ? displayData(data) : null}
+        {data.length ? displayData(data) : dataError ? <Text style={styles.error}>{dataError}</Text> : null}
       </ScrollView>
     </View>
   );
@@ -160,16 +159,22 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     color: 'white'
+  },
+  error: {
+    textAlign: "center",
+    fontSize: 18,
+    color: "white"
   }
 });
 
-function mapStateToProps (state) {
+function mapStateToProps(state) {
   return {
-    data: state.visualizer.data
+    data: state.visualizer.data,
+    dataError: state.visualizer.error
   };
 }
 
-function mapDispatchToProps (dispatch) {
+function mapDispatchToProps(dispatch) {
   return {
     getData: (url) => dispatch(getData(url))
   };
