@@ -34,7 +34,7 @@ export function Home ({ getData, data }) {
       <View>
         <Text style={styles.title}>FilesTree Visualizer</Text>
       </View>
-      <View>
+      <View style={{ marginVertical: 10 }}>
         <Text style={styles.label}>URL datos:</Text>
         <TextInput style={styles.input} autoCapitalize="none" value={state.url} onChangeText={text => setState({ ...state, url: text })} placeholder="https://ejemplo.com/api" />
         <TouchableOpacity style={styles.button} onPress={() => handleRequest()}>
@@ -52,8 +52,7 @@ export function Home ({ getData, data }) {
 
 function mapStateToProps (state) {
   return {
-    data: state.visualizer.data,
-    dataError: state.visualizer.error
+    data: state.visualizer.data
   };
 }
 
